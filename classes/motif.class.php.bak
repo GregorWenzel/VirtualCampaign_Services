@@ -1,0 +1,830 @@
+<?php
+/** 
+ * ----------------------------------------------------------------------------
+ * File: 		motif.class.php
+ * 
+ * @author  	Christiane Kuhn <kuhn@webdevelopment-koeln.de>
+ * @link 		http://webdevelopment-koeln.de
+ * 
+ * @category	Virtual Campaign 
+ *
+ * 
+ * This Script was developed by Christiane Kuhn - ChK Web-Development.
+ * You are authorised to use this Script on your internet sides.
+ * The right to use applies only to the direct use of the software by HERZBERGMEDIA/ibt-studios for Virtual Campaign.
+ * You are not authorised to resale, to lease or to publish the software outside of HERZBERGMEDIA/ibt-studios for Virtual Campaign.
+ *
+ * The passing of this script is not allowed.
+ *
+ * Please do not remove this header.
+ *
+ * ----------------------------------------------------------------------------
+ * Rev: 	2012-01 	ChK	Created
+ * 
+ * ----------------------------------------------------------------------------
+ *
+ */
+
+/**
+ * class motif
+ *
+ */
+class motif
+{
+	protected $_dbconn;
+	public $_motif_id;
+	public $_account_id;
+	public $_error;
+	public $_errorArr;
+	
+	/**
+	 * set required params for actions
+	 * defined foreach action
+	 */
+	protected $_required =  array(
+				'migrateMotif' => array(array('name' => 'name'
+										,'type' => 'string' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => '255'      
+										)
+								,array('name' => 'accountID'
+										,'type' => 'int' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => ''      
+										)
+								,array('name' => 'description'
+										,'type' => 'string' 
+										,'musthave' => 'optional' 
+										,'maxstringlen' => '255'      
+										)						
+								,array('name' => 'oldID'
+										,'type' => 'int' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => ''      
+										)
+								,array('name' => 'oldAccountID'
+										,'type' => 'int' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => ''      
+										)
+								,array('name' => 'oldAccountGroupID'
+										,'type' => 'int' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => ''      
+										)										
+								,array('name' => 'frameCount'
+										,'type' => 'int' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => ''      
+										)
+								,array('name' => 'oldPath'
+										,'type' => 'string' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => '255'      
+										)										
+								)
+				,'uploadMotif' => array(array('name' => 'accountID'
+										,'type' => 'int' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => ''      
+										)
+								,array('name' => 'media_format_id'
+										,'type' => 'int' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => ''      
+										)
+								)
+				,'createMotif' => array(array('name' => 'accountID'
+										,'type' => 'int' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => ''      
+										)
+								,array('name' => 'media_format_id'
+										,'type' => 'int' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => ''      
+										)
+								,array('name' => 'name'
+										,'type' => 'string' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => '255'      
+										)
+								,array('name' => 'description'
+										,'type' => 'string' 
+										,'musthave' => 'optional' 
+										,'maxstringlen' => '255'      
+										)
+								)
+				,'updateMotif' => array(array('name' => 'motifID'
+										,'type' => 'int' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => ''      
+										)
+								,array('name' => 'ownerID'
+										,'type' => 'int' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => ''      
+										)
+								,array('name' => 'motifTypeID'
+										,'type' => 'int' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => ''      
+										)
+								,array('name' => 'motifName'
+										,'type' => 'string' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => '255'      
+										)
+								,array('name' => 'motifComment'
+										,'type' => 'string' 
+										,'musthave' => 'optional' 
+										,'maxstringlen' => '255'      
+										)
+								,array('name' => 'image_film_flag'
+										,'type' => 'string' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => ''      
+										)
+								,array('name' => 'extension'
+										,'type' => 'string' 
+										,'musthave' => 'optional'  //only for film required 
+										,'maxstringlen' => ''      
+										)
+								)
+				,'deleteMotif' => array(array('name' => 'motifID'
+										,'type' => 'int' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => ''      
+										)
+								,array('name' => 'ownerID'
+										,'type' => 'int' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => ''      
+										)
+								)
+				,'readMotif' => array(array('name' => 'motifID'
+										,'type' => 'int' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => ''      
+										)
+								,array('name' => 'ownerID'
+										,'type' => 'int' 
+										,'musthave' => 'required' 
+										,'maxstringlen' => ''      
+										)
+								)
+				,'getMotifListByAccount' => array(array('name' => 'accountID'
+									,'type' => 'int' 
+									,'musthave' => 'optional' 
+									,'maxstringlen' => ''      
+									)
+								,array('name' => 'min_date'
+									,'type' => 'string' 
+									,'musthave' => 'required' 
+									,'maxstringlen' => '255' 	
+									)										
+							)		
+			);
+				
+	/**
+	 * Constructor
+	 *
+	 * @param obj $dbconn
+	 * @param int $motif_id = null
+	 * 
+	 */
+	public function __construct($dbconn, $account_id = null, $motif_id = null)
+	{
+		$this->_dbconn 		= $dbconn;
+		$this->_motif_id 	= $motif_id;
+		$this->_account_id 	= $account_id;
+	}
+	
+	public function migateMotif($valueArr) {
+		$success = false;
+		//validate
+		$success = format::check_params($valueArr, $this->_required['migrateMotif']);
+		
+		if($success === false) {
+			$this->_error .= error::buildErrorString(format::$_errorArr);
+			return null;
+		} else {	
+			$sql = "insert into motif"
+					." set"
+					." account_id 	= "	.(int)$valueArr['accountID']
+					.",name		  	='"	.$this->_dbconn->real_escape_string($valueArr['name']) . "'"
+					.",description	='"	.$this->_dbconn->real_escape_string($valueArr['description']) . "'"
+					.",frameCount	= " .(int)$valueArr['frameCount']
+					.";";
+			echo "<SQL>".$sql."</SQL>";
+			/*
+			if ($res =  $this->_dbconn->query($sql)) {
+				$this->_motif_id 	= $this->_dbconn->insert_id;
+				
+				if ((int)$valueArr['frameCount'] == 1)
+				{
+					$source = "X:/web/virtualcampaign/users/".(int)$valueArr['oldAccountID']."/motifs/".$oldID."s.jpg";
+					
+					if (!is_dir("X:/web/virtualcampaign/migration/accounts/".(int)$valueArr['accountID']))
+					{
+						mkdir("X:/web/virtualcampaign/migration/accounts/".(int)$valueArr['accountID']);
+						mkdir("X:/web/virtualcampaign/migration/accounts/".(int)$valueArr['accountID']."/motifs");
+					}
+					
+					$target = "X:/web/virtualcampaign/amigration/ccounts/".(int)$valueArr['accountID']."/motifs/".$this->_motif_id.".jpg";
+					copy($source, $target);
+				}	
+			} else {
+				$this->_error .= error::buildErrorString(array('SQL-ERROR'=>'motif->migrateMotif'),$this->_dbconn->error);
+				return false; 
+			}
+			*/
+		}
+	}
+	
+	/**
+	 * createMotif
+	 *
+	 * @param array $valueArr
+	 * @param array $_FILES
+	 * 
+	 * @return array $dataArr or null
+	 */
+	 
+	public function uploadMotif($valueArr, $_FILES) {
+		$success = false;
+		//validate
+		$success = format::check_params($valueArr, $this->_required['getMotifListByAccount']);
+		
+		if($success === false) {
+			$this->_error .= error::buildErrorString(format::$_errorArr);
+			return null;
+		} else {
+			$timestamp = time();
+
+			//get validated/modified values
+			$valueArr = format::$_returnArr;		
+			$orig_filename = $_FILES['Filedata']['name'];
+			
+			/*
+			if('image' == $valueArr['image_film_flag']) {
+				$return = $this->moveAndModifyImage($_FILES);
+				if(null === $return || !is_array($return)) {
+					$this->_error .= 'ERROR: moveAndModifyImage';
+					return null;
+				} else {
+					$return['aspect'] 		= round($return['aspect'],2);
+				}
+			} elseif ('film' == $valueArr['image_film_flag']) {
+				$return = $this->moveAndModifyFilm($_FILES, $valueArr);
+				if(null === $return || !is_array($return)) {
+					$this->_error .= 'ERROR: moveAndModifyFilm';
+					return null;
+				} else {
+					$return['aspect'] 		= round($return['aspect'],2);
+				}
+			} else {
+				//no uplaod => cannot create motif
+				$this->_error .= 'ERROR: no file was uploaded';
+				return null;
+			}
+			*/
+		}		
+	}
+	/*
+	public function createMotif($valueArr, $_FILES) {
+		if($success === false) {
+			$this->_error .= error::buildErrorString(format::$_errorArr);
+			return null;
+		} else {
+		
+		$return = array('name' 		=> ''
+					,'animated' 	=> 0
+					,'frames_count' => 1
+					,'aspect'		=> 1
+					,'time'			=> 0
+					);
+		$success = false;
+		//validate
+		$success = format::check_params($valueArr, $this->_required['createMotif']);
+		if($success === false) {
+			$this->_error .= error::buildErrorString(format::$_errorArr);
+			return null;
+		} else {
+			if('film' == $valueArr['image_film_flag'] && (!isset($valueArr['extension']) || '' == $valueArr['extension'])) {
+				$this->_error .= locale::ERR_NOT_ALL_PARAMS;
+				return null;
+			}
+			//get validated/modified values
+			$valueArr = format::$_returnArr;
+			$this->_account_id 	= $valueArr['ownerID'];
+			
+			$orig_filename = $_FILES['Filedata']['name'];
+			if('image' == $valueArr['image_film_flag']) {
+				$return = $this->moveAndModifyImage($_FILES);
+				if(null === $return || !is_array($return)) {
+					$this->_error .= 'ERROR: moveAndModifyImage';
+					return null;
+				} else {
+					$return['aspect'] 		= round($return['aspect'],2);
+				}
+			} elseif ('film' == $valueArr['image_film_flag']) {
+				$return = $this->moveAndModifyFilm($_FILES, $valueArr);
+				if(null === $return || !is_array($return)) {
+					$this->_error .= 'ERROR: moveAndModifyFilm';
+					return null;
+				} else {
+					$return['aspect'] 		= round($return['aspect'],2);
+				}
+			} else {
+				//no uplaod => cannot create motif
+				$this->_error .= 'ERROR: no file was uploaded';
+				return null;
+			}
+
+			//insert motif (first without file)
+			$sql = "insert into motif"
+					." set" 
+					.	" account_id		= " . (int)$valueArr['ownerID'] 
+					.	",media_format_id	= " . (int)$valueArr['motifTypeID']
+					.	",name		 		= '" . $this->_dbconn->real_escape_string($valueArr['motifName']) . "'"
+					.	",frames_count		= " . (int)$return['frames_count']
+					.	",width				= " . (int)$return['width']
+					.	",aspect			= '" . $this->_dbconn->real_escape_string($return['aspect']) . "'"
+				  	.	",creation_time 	= now()"
+				  	.	",description 		= '" . $this->_dbconn->real_escape_string($valueArr['motifComment']) . "'"
+				  	.	",path		 		= ''"	//per update later! motif_id needed
+				  	.	",orig_filename		= '" . $this->_dbconn->real_escape_string($orig_filename) . "'"
+					.	",create_ts			= null"
+					.";";
+			if ($res =  $this->_dbconn->query($sql)) {
+				$this->_motif_id 	= $this->_dbconn->insert_id;
+				
+				if($this->moveMotifFile($return['name'])) {
+					//update path (OHNE extension! analog zur alten Version, allerdings mit vollstänigem Pfad, nicht nur ab 'upload-dir')
+					$path = UPLOAD_DIR . 'motifs/' . (int)$valueArr['ownerID'] . '/' . $this->_motif_id; 
+					$return['name'] = $path;
+					$sql = "update motif"
+						." set" 
+						.	" path		 		= '" . $this->_dbconn->real_escape_string($path) . "'"
+						." where" 
+						.	" motif_id			= " . (int)$this->_motif_id 
+						.	" and account_id	= " . (int)$valueArr['ownerID']
+						.";";
+					if (!$this->_dbconn->query($sql)) {
+						$this->_error .= error::buildErrorString(array('SQL-ERROR'=>'motif->createMotif update path'),$this->_dbconn->error);
+						return false;
+					}
+				} else {
+					$this->_error .= ' ERROR: move file';
+					return false; 
+				}
+			} else {
+				$this->_error .= error::buildErrorString(array('SQL-ERROR'=>'motif->createMotif insert'),$this->_dbconn->error);
+				return false;
+			}
+		}
+		return $return;
+	}
+	
+	/**
+	 * updateMotif
+	 *
+	 * @param array $valueArr
+	 * 
+	 * @return bool
+	 */
+	public function updateMotif($valueArr) {
+		
+		$return = array('name' 		=> ''
+					,'animated' 	=> 0
+					,'frames_count' => 1
+					,'aspect'		=> 1
+					,'time'			=> 0
+					);
+		$success = false;
+		//validate
+		$success = format::check_params($valueArr, $this->_required['updateMotif']);
+		if($success === false) {
+			$this->_error .= error::buildErrorString(format::$_errorArr);
+			return null;
+		} else {
+			//get validated/modified values
+			$valueArr = format::$_returnArr;
+			
+			$this->_motif_id 	= (int)$valueArr['motifID'];
+			$this->_account_id 	= (int)$valueArr['ownerID'];
+			
+			$newMotif = false;
+			if('' != $_FILES["Filedata"]["tmp_name"] && is_uploaded_file($_FILES['Filedata']['tmp_name'])===true) {
+				$newMotif = true;
+				$orig_filename = $_FILES['Filedata']['name'];
+				if('image' == $valueArr['image_film_flag']) {
+					$return = $this->moveAndModifyImage($_FILES);
+					if(null === $return || !is_array($return)) {
+						$this->_error .= 'ERROR: moveAndModifyImage';
+						return null;
+					} else {
+						$return['aspect'] 		= round($return['aspect'],2);
+					}
+				} elseif ('film' == $valueArr['image_film_flag']) {
+					$return = $this->moveAndModifyFilm($_FILES, $valueArr);
+					if(null === $return || !is_array($return)) {
+						$this->_error .= 'ERROR: moveAndModifyFilm';
+						return null;
+					} else {
+						$return['aspect'] 		= round($return['aspect'],2);
+					}
+				} else {
+					//no uplaod => cannot create motif
+					$this->_error .= 'ERROR: no file was uploaded';
+					return null;
+				}
+			}
+
+/* old script: saveMotif.php
+ * $query = "UPDATE motifs SET type=".$_POST['motifType'].", name='".$_POST['motifName']."', comment='".$_POST['motifComment']."' WHERE ID=".$_POST['motifID'];
+ */		
+			//update motif
+			$sql = "update motif"
+				." set" 
+				.	" media_format_id	= " . (int)$valueArr['motifTypeID']
+				.	",name		 		= '" . $this->_dbconn->real_escape_string($valueArr['motifName']) . "'"
+			  	.	",description 		= '" . $this->_dbconn->real_escape_string($valueArr['motifComment']) . "'"
+			  	;
+			if($newMotif) {
+				if($this->moveMotifFile($return['name'])) {
+					//update path (OHNE extension! analog zur alten Version, allerdings mit vollstänigem Pfad, nicht nur ab 'upload-dir')
+					$path = UPLOAD_DIR . 'motifs/' . (int)$valueArr['ownerID'] . '/' . (int)$valueArr['motifID'];
+					$return['name'] = $path;
+					$sql .= ",frames_count		= " . (int)$return['frames_count']
+						.	",width				= " . (int)$return['width']
+						.	",aspect			= '" . $this->_dbconn->real_escape_string($return['aspect']) . "'"
+						.	",path		 		= '" . $this->_dbconn->real_escape_string($path) . "'"
+				  		.	",orig_filename		= '" . $this->_dbconn->real_escape_string($orig_filename) . "'"
+						;
+				} else {
+					$this->_error .= ' ERROR: move file';
+					return false; 
+				}
+			} 
+			$sql .= " where" 
+				.	" motif_id			= " . (int)$valueArr['motifID'] 
+				.	" and account_id	= " . (int)$valueArr['ownerID']
+				.";";
+			if (!$this->_dbconn->query($sql)) {
+				$this->_error .= error::buildErrorString(array('SQL-ERROR'=>'motif->updateMotif'),$this->_dbconn->error);
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	
+	
+	/**
+	 * deleteMotif
+	 * 
+	 * @param array $valueArray
+	 * 
+	 * @return bool
+	 */
+	public function deleteMotif($valueArr) {
+		$success = false;
+		//validate
+		$success = format::check_params($valueArr, $this->_required['deleteMotif']);
+		if($success === false) {
+			$this->_error .= error::buildErrorString(format::$_errorArr);
+			return null;
+		} else {
+			//get validated/modified values
+			$valueArr = format::$_returnArr;
+			//delete motive
+/* old script: deleteMotif.php
+ * $query = "DELETE FROM motifs WHERE ID = ".$_POST['ID'];
+ */
+//TODO: klären, ob hier noch geprüft werden muss, ob Abhängigkeiten bestehen			
+			$sql = "delete from motif"
+					." where" 
+					.	" motif_id			= " . (int)$valueArr['motifID'] 
+					.	" and account_id	= " . (int)$valueArr['ownerID']
+					.";";
+			if ($this->_dbconn->query($sql)) {
+				@unlink(BASE_DIR . '/users/motifs/' . (int)$valueArr['ownerID'] . '/' . (int)$valueArr['motifID'] . '.jpg');
+				@unlink(BASE_DIR . '/users/motifs/' . (int)$valueArr['ownerID'] . '/' . (int)$valueArr['motifID'] . '_thumb.jpg');
+			} else {
+				$this->_error .= error::buildErrorString(array('SQL-ERROR'=>'motif->deleteMotif'),$this->_dbconn->error);
+				return false;
+			};
+		}
+		return true;
+	}
+	
+	/**
+	 * readMotif
+	 * 
+	 * @param array $valueArray
+	 * 
+	 * @return result-set or null
+	 */
+	public function readMotif($valueArr)	{
+		$success = false;
+		//validate
+		$success = format::check_params($valueArr, $this->_required['readMotif']);
+		if($success === false) {
+			$this->_error .= error::buildErrorString(format::$_errorArr);
+			return null;
+		} else {
+			//get validated/modified values
+			$valueArr = format::$_returnArr;
+			
+			//get motive
+/* old script:
+ * noch nicht gefunden => welches Script?
+ */			
+			$sql="select"
+				." motif_id"
+				.",account_id"
+				.",media_format_id"
+				.",name"
+				.",frames_count"
+				.",width"
+				.",aspect"
+				.",path"
+				.",creation_time"
+				.",deletion_time"
+				.",description"
+			." from"
+				." motif"
+			." where" 
+				." motif_id 		= " . (int)$valueArr['motifID']
+				." and account_id 	= " . (int)$valueArr['ownerID']
+				.";";
+			if (!$res =  $this->_dbconn->query($sql)) {
+				$this->_error .= error::buildErrorString(array('SQL-ERROR'=>'motif->readMotif'),$this->_dbconn->error);
+				return null;
+			}
+			return $res;
+		}
+	}
+	
+	/**
+	 * getMotifListByAccount
+	 * 
+	  * @param array $valueArray
+	 *
+	 * @return result-set or null
+	 */
+	public function getMotifListByAccount($valueArr) {
+		$success = false;
+		//validate
+		$success = format::check_params($valueArr, $this->_required['getMotifListByAccount']);
+		if($success === false) {
+			$this->_error .= error::buildErrorString(format::$_errorArr);
+			return null;
+		} else {
+			//get validated/modified values
+			$valueArr = format::$_returnArr;
+						
+			$sql = "select"
+					." motif.motif_id"
+					.", motif.account_id"
+					.", motif.media_format_id"
+					.", motif.name AS motif_name"
+					.", motif.frames_count"
+					.", motif.width"
+					.", motif.aspect"
+					.", motif.path"
+					.", motif.description"
+					.", motif.creation_time"
+					.", motif.text_content"
+					.", media_format.extension"
+					.", media_format.format_type"
+					.", media_format.name AS media_format_name"
+					." from motif, media_format"
+					." where media_format.media_format_id = motif.media_format_id"
+					." and creation_time >= UNIX_TIMESTAMP(".$valueArr['date'].")";
+					
+					if (isset($valueArr['accountID']))
+						$sql .= " and motif.account_id = ".(int)$valueArr['accountID'];
+															
+					$sql .= " order by motif.creation_time;";
+					
+			if (!$res =  $this->_dbconn->query($sql)) {
+				$this->_error .= error::buildErrorString(array('SQL-ERROR'=>'production->getMotifListByAccount'),$this->_dbconn->error);
+				return null;
+			}
+			return $res;
+		}
+	}	
+	
+	/**
+	 * getFileExt
+	 *
+	 * @param string $filename
+	 * @return string
+	 */
+	protected function getFileExt($filename) {
+		$ext='';
+		//$dummy = explode('.',$filename);
+		//$ext = '.' . $dummy[count($dummy)-1];
+		$ext = "." . end(explode(".", $filename));
+		return $ext;
+	}
+	
+	
+	/**
+	 * moveMotifFile
+	 * 
+	 * @param string $name
+	 * @return bool
+	 */
+	protected function moveMotifFile($name) {
+		//move prepared file
+		//$name = 'temp_' . $this->_account_id;
+			
+		//hier immer in .jpg umwandeln (beim upload), analog zu 'old scripts'	
+		$from 	= BASE_DIR . '/temp/' . $name . '.jpg'; 
+		$to 	= BASE_DIR . '/users/motifs/' . $this->_account_id . '/' . $this->_motif_id . '.jpg';
+		if(file_exists($from) && copy($from, $to)) {
+			chmod ($to, UPLOAD_FILE_RIGHT);
+		} else {
+			$this->_error .= 'ERROR: copy file ' . $from . ' to ' . $to;
+			return false;
+		}
+
+		$from 	= BASE_DIR . '/temp/' . $name . '_thumb.jpg'; 
+		$to 	= BASE_DIR . '/users/motifs/' . $this->_account_id . '/' . $this->_motif_id . '_thumb.jpg';
+		if(file_exists($from) && copy($from, $to)) {
+			chmod ($to, UPLOAD_FILE_RIGHT);
+		} else {
+			$this->_error .= 'ERROR: copy file ' . $from . ' to ' . $to;
+			return false;
+		}
+		
+		$from 	= BASE_DIR . '/temp/' . $name . '_bigthumb.jpg';
+		$to 	= BASE_DIR . '/users/motifs/' . $this->_account_id . '/' . $this->_motif_id . '_bigthumb.jpg';
+		if(file_exists($from) && copy($from, $to)) {
+			chmod ($to, UPLOAD_FILE_RIGHT);
+		} else {
+			$this->_error .= 'ERROR: copy file ' . $from . ' to ' . $to;
+			return false;
+		}
+
+		@unlink(BASE_DIR . '/temp/' . $name . ".jpg");
+		@unlink(BASE_DIR . '/temp/' . $name . "_thumb.jpg");
+		@unlink(BASE_DIR . '/temp/' . $name . "_bigthumb.jpg");
+		return true;
+	}
+	
+	/**
+	 * moveAndModifyImage
+	 *
+	 * @param array $_FILES
+	 * 
+	 * @return array $return or null
+	 */
+	protected function moveAndModifyImage($_FILES) {
+		try {
+			$return = array('name' 	=> ''
+					,'animated' 	=> 0
+					,'frames_count' => 1
+					,'width' 		=> 0
+					,'aspect'		=> 1
+					,'time'			=> 0
+					);
+			
+			$uploaddir 	= BASE_DIR . '/temp/'; 
+			$filename = $_FILES['Filedata']['name'];
+			$extension = $this->getFileExt($filename);
+			$name = 'temp_' . $this->_account_id;
+			$stmap = time();
+			$return['time']	= $stmap;
+			$return['name'] = $name;
+			
+			move_uploaded_file($_FILES['Filedata']['tmp_name'], $uploaddir . $rnd . $extension);
+
+			$cmd = 'convert ' . $uploaddir . $rnd . $extension . ' -colorspace rgb -quality 100 -density 300 ' . $uploaddir . $name . '.jpg';
+			exec($cmd);
+			unlink($uploaddir . $rnd . $extension);
+			
+			list($width, $height, $type, $attr) = getimagesize($uploaddir . $name . ".jpg");
+			if((int)$height > 0) {
+		    	$aspect = (int)$width / (int)$height;
+			} else {
+				$aspect = 1; 
+			}
+		    $return['width'] 	= $width;
+		    $return['aspect'] 	= $aspect;
+		    
+		    $cmd = 'convert ' . $uploaddir . $name . '.jpg -resize ' . $aspect * NEWHEIGHT_S . 'x' . NEWHEIGHT_S . ' ' . $uploaddir . $name . '_thumb.jpg';
+		   	exec($cmd);
+		   
+		   	$cmd = 'convert ' . $uploaddir . $name . '.jpg -resize ' . $aspect * NEWHEIGHT_L . 'x' . NEWHEIGHT_L . ' ' . $uploaddir . $name . '_bigthumb.jpg';
+		   	exec($cmd);
+			
+			return $return;
+		} catch (Exception $e) {
+			return null;
+		}
+	}
+	
+	/**
+	 * moveAndModifyFilm
+	 *
+	 * @param array $_FILES
+	 * @param array $valueArr
+	 * 
+	 * @return array $return or null
+	 */
+	protected function moveAndModifyFilm($_FILES, $valueArr) {
+
+//TODO: was passiert mit tmpxx-Ordner und .tga-Dateien in tmp?!? im alten Script nichts gefunden, wo diese gelöscht oder verschoben werden... sollen die da liegen bleiben?
+
+		try {
+			$return = array('name' 	=> ''
+					,'animated' 	=> 1
+					,'frames_count' => 1
+					,'width' 		=> 0
+					,'aspect'		=> 1
+					,'time'			=> 0
+					);
+			
+			$uploaddir 	= BASE_DIR . '/temp/'; 
+			$nname = trim($valueArr['motifName']);
+			if (0 == strlen($nname)) {
+				$this->_error .= 'ERROR: moveAndModifyFilm';
+				return null; 
+			}
+			$name = "temp_" . $this->_account_id . "." . $valueArr['extension'];
+			
+   			move_uploaded_file($_FILES['Filedata']['tmp_name'], $uploaddir . $name);
+   			
+   			if (is_dir($uploaddir . 'temp' . $this->_account_id)) {
+        		$this->rmdir_recursive($uploaddir . 'temp' . $this->_account_id);
+   			}
+   			mkdir($uploaddir . 'temp' . $this->_account_id);
+   			
+//dummy for local test (ein paar files von hand erzeugen)
+//			copy($uploaddir . $name, $uploaddir . 'temp' . $this->_account_id . '/motif_F0002.tga');			
+//			copy($uploaddir . $name, $uploaddir . 'temp' . $this->_account_id . '/motif_F0001.tga');
+//			copy($uploaddir . $name, $uploaddir . 'temp' . $this->_account_id . '/motif_F0003.tga');   			
+   			
+//online   			
+ 			//$cmd = '"' . FFMPEGPATH . '/ffmpeg" -i ' . $uploaddir . $name . " " . $uploaddir . "temp" . $this->_account_id . '/motif_F%04d.tga';
+ 			$cmd = 'ffmpeg -i ' . $uploaddir . $name . ' ' . $uploaddir . 'temp' . $this->_account_id . '/motif_F%04d.tga';
+			exexec($cmd);
+			
+			unlink($uploaddir . $name);
+			
+			$return['frames_count'] = $nFrames = count(glob($uploaddir . 'temp' . $this->_account_id . '/*.tga'));
+   			$return['name'] = $name = substr($valueArr['motifName'],0,strlen($valueArr['motifName'])-4);
+   			copy($uploaddir . 'temp' . $this->_account_id . '/motif_F0002.tga', $uploaddir . $name . '.tga');
+
+	   		$cmd = 'convert ' . $uploaddir . $name . '.tga -format jpg ' . $uploaddir . $name . '.jpg';
+			exec($cmd);
+			
+			$width = 0;
+			if(is_file($uploaddir . $name . '.jpg'))  {
+				list($width, $height, $type, $attr) = getimagesize($uploaddir . $name . '.jpg');
+			}
+		   	$return['width'] = $width;
+		   	$return['aspect'] = $aspect = $width / $height;
+		   	
+		   	$cmd = 'convert ' . $uploaddir . $name . '.jpg -resize ' . $aspect * NEWHEIGHT_S . 'x' . NEWHEIGHT_S . ' ' . $uploaddir . $name . '_thumb.jpg';
+			exec($cmd);
+			
+			$cmd = 'convert ' . $uploaddir . $name . '.jpg -resize ' . $aspect * NEWHEIGHT_L . 'x' . NEWHEIGHT_L . ' ' . $uploaddir . $name . '_bigthumb.jpg';
+ 			exec($cmd);
+   			
+   			copy($uploaddir . $name . '_bigthumb.jpg', $uploaddir . 'temp_' . $valueArr['ownerID'] . '_bigthumb.jpg');
+					
+			return $return;
+		} catch (Exception $e) {
+			return null;
+		}
+	}
+	
+	/**
+	 * rmdir_recursive
+	 *
+	 * @param string $dir
+	 */
+	protected function rmdir_recursive($dir) {
+		$files = scandir($dir);
+    	array_shift($files);    // remove '.' from array
+    	array_shift($files);    // remove '..' from array
+    
+	    foreach ($files as $file) {
+	        $file = $dir . '/' . $file;
+	        if (is_dir($file)) {
+	            rmdir_recursive($file);
+	            rmdir($file);
+	        } else {
+	            unlink($file);
+	        }
+	    }
+	    rmdir($dir);
+	}
+} 
+?>

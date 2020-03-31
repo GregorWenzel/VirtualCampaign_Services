@@ -1,0 +1,12 @@
+# robots.txt
+# Zugriff auf alle Dateien erlauben
+# User-agent: *
+# Disallow:
+
+# Alle Robots für VZ /temp/ ausschließen
+# User-agent: *
+# Disallow: /temp/
+
+# Ganze Site für alle Robots sperren
+User-agent: *
+Disallow: /

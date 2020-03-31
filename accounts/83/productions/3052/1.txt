@@ -1,0 +1,3 @@
+"ID" => $ds['content_format_id'],
+"Aspect" => $ds['aspect'],
+"Name" => $ds['name'],
